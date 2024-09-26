@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface - Thirdeye AI</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            justify-content: space-between;
+        }
+        .header {
+            background-color: #007bff;
+            padding: 10px;
+            color: white;
+            text-align: center;
+            font-size: 24px;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        .user-message {
+            align-self: flex-end;
+            background-color: #007bff;
+            color: white;
+        }
+        .ai-message {
+            align-self: flex-start;
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .footer {
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+        }
+        .input-field {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .file-upload {
+            margin-right: 10px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        label.upload-btn {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            Thirdeye AI - Chat Interface
+        </div>
+        <div id="chat" class="chat-container">
+            <!-- Messages will be appended here -->
+        </div>
+        <div class="footer">
+            <div class="file-upload">
+                <input type="file" id="fileInput" accept="image/*,.pdf,.txt" multiple>
+                <label for="fileInput" class="upload-btn">Upload Files</label>
+            </div>
+            <div class="input-field">
+                <input type="text" id="userInput" placeholder="Type your message...">
+            </div>
+            <button onclick="submitChat()" id="submitBtn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        let userIp = 'your-ip-address'; // You can fetch the user's IP dynamically if needed
+        let businessUrl = 'your-business-url'; // Dynamically set this if required
+
+        // Function to append messages to the chat container
+        function appendMessage(sender, message) {
+            const chatContainer = document.getElementById('chat');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.classList.add(sender === 'User' ? 'user-message' : 'ai-message');
+            messageElement.textContent = message;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to bottom
+        }
+
+        // Function to handle chat submission
+        function submitChat() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value;
+            const files = document.getElementById('fileInput').files;
+
+            if (message || files.length > 0) {
+                appendMessage('User', message || '[File Sent]');
+
+                // Clear the input field
+                userInput.value = '';
+
+                const separator = "§¶∆≈¥";
+                const combinedMessage = `${message}${separator}${businessUrl}`;
+
+                // Prepare FormData for multimodal data (message + file attachments)
+                const formData = new FormData();
+                formData.append('message', combinedMessage);
+                formData.append('ip_address', userIp);
+
+                // Append any uploaded files
+                if (files.length > 0) {
+                    for (let i = 0; i < files.length; i++) {
+                        formData.append('files[]', files[i]);
+                    }
+                }
+
+                // Send the message and file attachments to the backend
+                fetch('https://b1e8-34-139-162-30.ngrok-free.app/chat', {  // Replace with your backend URL
+                    method: 'POST',
+                    body: formData,  // Send form data containing message and files
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Append the AI's response to the chat
+                    appendMessage('AI', data.response || 'Received your files.');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    appendMessage('AI', 'We are conducting maintenance on our chat service, this feature is unavailable right now.');
+                });
+            }
+        }
+
+        // Optional: Disable the send button if input is empty
+        const userInput = document.getElementById('userInput');
+        const submitBtn = document.getElementById('submitBtn');
+        userInput.addEventListener('input', () => {
+            submitBtn.disabled = !userInput.value.trim();
+        });
+    </script>
+</body>
+</html>
+
