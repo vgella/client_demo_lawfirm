@@ -46,6 +46,7 @@
             align-self: flex-start;
             background-color: #e0e0e0;
             color: #333;
+            white-space: pre-line;
         }
         .footer {
             padding: 15px;
@@ -128,7 +129,7 @@
         </div>
         <div class="footer">
             <div class="file-upload">
-                <input type="file" id="fileInput" accept="image/*,.pdf,.txt" multiple>
+                <input type="file" id="fileInput" accept=".pdf,.txt" multiple>
                 <label for="fileInput" class="upload-btn">Upload Files</label>
             </div>
             <div class="input-field">
@@ -144,13 +145,13 @@
     <script>
         let uploadedFiles = [];
         let ipAddress = '';  // To store user's IP address
-        const separator = "§¶∆≈¥";  // Custom separator to pass between user message and system message
 
         // Fetch and set the user's IP address
         fetch('https://api64.ipify.org?format=json')
             .then(response => response.json())
             .then(data => {
                 ipAddress = data.ip;
+                fetchUploadedFiles();
             });
 
         document.getElementById('fileInput').addEventListener('change', function(event) {
@@ -161,6 +162,25 @@
             }
         });
 
+        function fetchUploadedFiles() {
+            // Fetch existing uploaded files from the backend for this IP address
+            const formData = new FormData();
+            formData.append('ip_address', ipAddress);
+
+            fetch('https://YOUR_NGROK_URL_HERE/uploaded-files', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                uploadedFiles = data.uploaded_files || [];
+                displayFiles();
+            })
+            .catch(error => {
+                console.error('Error fetching uploaded files:', error);
+            });
+        }
+
         function displayFiles() {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';  // Clear previous files
@@ -170,7 +190,7 @@
                 
                 const fileName = document.createElement('span');
                 fileName.classList.add('file-name');
-                fileName.textContent = file.name;
+                fileName.textContent = file.name || file;
                 fileItem.appendChild(fileName);
                 
                 const removeBtn = document.createElement('button');
@@ -184,7 +204,7 @@
         }
 
         function removeFile(index) {
-            const fileName = uploadedFiles[index].name;
+            const fileName = uploadedFiles[index].name || uploadedFiles[index];
             uploadedFiles.splice(index, 1);
             displayFiles();
             
@@ -193,7 +213,7 @@
             formData.append('ip_address', ipAddress);
             formData.append('file_name', fileName);
 
-            fetch('https://8f9d-35-204-47-124.ngrok-free.app/delete-file', {
+            fetch('https://YOUR_NGROK_URL_HERE/delete-file', {
                 method: 'POST',
                 body: formData,
             })
@@ -211,9 +231,26 @@
             const messageElement = document.createElement('div');
             messageElement.classList.add('message');
             messageElement.classList.add(sender === 'User' ? 'user-message' : 'ai-message');
-            messageElement.textContent = message;
+            
+            // Format AI response like a word document
+            if (sender === 'AI') {
+                const formattedMessage = formatWordDocument(message);
+                messageElement.innerHTML = formattedMessage;
+            } else {
+                messageElement.textContent = message;
+            }
+            
             chatContainer.appendChild(messageElement);
             chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to bottom
+        }
+
+        function formatWordDocument(text) {
+            // Replace `###` with headers, `-` with bullet points, etc.
+            return text
+                .replace(/### ([^\n]+)/g, '<h3>$1</h3>')
+                .replace(/#### ([^\n]+)/g, '<h4>$1</h4>')
+                .replace(/- ([^\n]+)/g, '<li>$1</li>')
+                .replace(/\n\n/g, '<p></p>');  // Basic line break handling
         }
 
         function submitChat() {
@@ -236,7 +273,7 @@
                 });
 
                 // Replace with your ngrok URL
-                fetch('https://8f9d-35-204-47-124.ngrok-free.app/chat', {
+                fetch('https://YOUR_NGROK_URL_HERE/chat', {
                     method: 'POST',
                     body: formData,
                 })
