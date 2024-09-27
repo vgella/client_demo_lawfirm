@@ -92,6 +92,30 @@
             background-color: #ccc;
             cursor: not-allowed;
         }
+        .file-list {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .file-item {
+            background-color: #f0f0f0;
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .file-name {
+            margin-right: 10px;
+        }
+        .remove-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
     </style>
 </head>
 <body>
@@ -112,13 +136,49 @@
             </div>
             <button onclick="submitChat()" id="submitBtn">Send</button>
         </div>
+        <div class="file-list" id="fileList">
+            <!-- Uploaded files will be listed here -->
+        </div>
     </div>
 
     <script>
-        let userIp = 'your-ip-address'; // You can fetch the user's IP dynamically if needed
-        let businessUrl = 'your-business-url'; // Dynamically set this if required
+        let uploadedFiles = [];
 
-        // Function to append messages to the chat container
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                uploadedFiles.push(files[i]);
+                displayFiles();
+            }
+        });
+
+        function displayFiles() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';  // Clear previous files
+            uploadedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.classList.add('file-item');
+                
+                const fileName = document.createElement('span');
+                fileName.classList.add('file-name');
+                fileName.textContent = file.name;
+                fileItem.appendChild(fileName);
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.classList.add('remove-btn');
+                removeBtn.textContent = 'X';
+                removeBtn.onclick = () => removeFile(index);
+                fileItem.appendChild(removeBtn);
+                
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            displayFiles();
+        }
+
         function appendMessage(sender, message) {
             const chatContainer = document.getElementById('chat');
             const messageElement = document.createElement('div');
@@ -129,57 +189,43 @@
             chatContainer.scrollTop = chatContainer.scrollHeight; // Scroll to bottom
         }
 
-        // Function to handle chat submission
         function submitChat() {
             const userInput = document.getElementById('userInput');
             const message = userInput.value;
-            const files = document.getElementById('fileInput').files;
 
-            if (message || files.length > 0) {
+            if (message || uploadedFiles.length > 0) {
                 appendMessage('User', message || '[File Sent]');
 
                 // Clear the input field
                 userInput.value = '';
 
-                const separator = "§¶∆≈¥";
-                const combinedMessage = `${message}${separator}${businessUrl}`;
-
-                // Prepare FormData for multimodal data (message + file attachments)
                 const formData = new FormData();
-                formData.append('message', combinedMessage);
-                formData.append('ip_address', userIp);
+                formData.append('message', message);
 
-                // Append any uploaded files
-                if (files.length > 0) {
-                    for (let i = 0; i < files.length; i++) {
-                        formData.append('files[]', files[i]);
-                    }
-                }
+                // Append uploaded files to formData
+                uploadedFiles.forEach((file) => {
+                    formData.append('files[]', file);
+                });
 
-                // Send the message and file attachments to the backend
-                fetch('https://1981-34-19-44-220.ngrok-free.app/chat', {  // Replace with your backend URL
+                // Replace with your ngrok URL
+                fetch('https://3a77-34-19-44-220.ngrok-free.app/chat', {
                     method: 'POST',
-                    body: formData,  // Send form data containing message and files
+                    body: formData,
                 })
                 .then(response => response.json())
                 .then(data => {
-                    // Append the AI's response to the chat
                     appendMessage('AI', data.response || 'Received your files.');
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     appendMessage('AI', 'We are conducting maintenance on our chat service, this feature is unavailable right now.');
                 });
+
+                // Reset the file list
+                uploadedFiles = [];
+                displayFiles();
             }
         }
-
-        // Optional: Disable the send button if input is empty
-        const userInput = document.getElementById('userInput');
-        const submitBtn = document.getElementById('submitBtn');
-        userInput.addEventListener('input', () => {
-            submitBtn.disabled = !userInput.value.trim();
-        });
     </script>
 </body>
 </html>
-
