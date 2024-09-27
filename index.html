@@ -167,7 +167,7 @@
             const formData = new FormData();
             formData.append('ip_address', ipAddress);
 
-            fetch('https://f2ff-35-204-47-124.ngrok-free.app/uploaded-files', {
+            fetch('https://c9c3-35-204-47-124.ngrok-free.app/uploaded-files', {
                 method: 'POST',
                 body: formData,
             })
@@ -213,7 +213,7 @@
             formData.append('ip_address', ipAddress);
             formData.append('file_name', fileName);
 
-            fetch('https://f2ff-35-204-47-124.ngrok-free.app/delete-file', {
+            fetch('https://c9c3-35-204-47-124.ngrok-free.app/delete-file', {
                 method: 'POST',
                 body: formData,
             })
@@ -269,11 +269,12 @@
 
                 // Append uploaded files to formData
                 uploadedFiles.forEach((file) => {
+                    
                     formData.append('files[]', file);
                 });
 
                 // Replace with your ngrok URL
-                fetch('https://f2ff-35-204-47-124.ngrok-free.app/chat', {
+                fetch('https://c9c3-35-204-47-124.ngrok-free.app/chat', {
                     method: 'POST',
                     body: formData,
                 })
