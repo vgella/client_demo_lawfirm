@@ -143,6 +143,8 @@
 
     <script>
         let uploadedFiles = [];
+        let userIpAddress = '';
+
 
         document.getElementById('fileInput').addEventListener('change', function(event) {
             const files = event.target.files;
@@ -151,7 +153,16 @@
                 displayFiles();
             }
         });
-
+        function fetchIpAddress() {
+            fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                userIpAddress = data.ip;
+            })
+            .catch(error => {
+                console.error('Error fetching IP address:', error);
+            });
+        }
         function displayFiles() {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';  // Clear previous files
@@ -201,6 +212,7 @@
 
                 const formData = new FormData();
                 formData.append('message', message);
+                formData.append('ip_address', userIpAddress);  // Add the IP address
 
                 // Append uploaded files to formData
                 uploadedFiles.forEach((file) => {
@@ -208,7 +220,7 @@
                 });
 
                 // Replace with your ngrok URL
-                fetch('https://e2c7-35-204-47-124.ngrok-free.app/chat', {
+                fetch('https://b24b-35-204-47-124.ngrok-free.app/chat', {
                     method: 'POST',
                     body: formData,
                 })
