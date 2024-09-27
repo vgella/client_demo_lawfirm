@@ -143,8 +143,15 @@
 
     <script>
         let uploadedFiles = [];
-        let userIpAddress = '';
+        let ipAddress = '';  // To store user's IP address
+        const separator = "§¶∆≈¥";  // Custom separator to pass between user message and system message
 
+        // Fetch and set the user's IP address
+        fetch('https://api64.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                ipAddress = data.ip;
+            });
 
         document.getElementById('fileInput').addEventListener('change', function(event) {
             const files = event.target.files;
@@ -153,16 +160,7 @@
                 displayFiles();
             }
         });
-        function fetchIpAddress() {
-            fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => {
-                userIpAddress = data.ip;
-            })
-            .catch(error => {
-                console.error('Error fetching IP address:', error);
-            });
-        }
+
         function displayFiles() {
             const fileList = document.getElementById('fileList');
             fileList.innerHTML = '';  // Clear previous files
@@ -186,8 +184,26 @@
         }
 
         function removeFile(index) {
+            const fileName = uploadedFiles[index].name;
             uploadedFiles.splice(index, 1);
             displayFiles();
+            
+            // Remove the file from the backend as well
+            const formData = new FormData();
+            formData.append('ip_address', ipAddress);
+            formData.append('file_name', fileName);
+
+            fetch('https://8f9d-35-204-47-124.ngrok-free.app/delete-file', {
+                method: 'POST',
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message || 'File deleted successfully.');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
 
         function appendMessage(sender, message) {
@@ -212,7 +228,7 @@
 
                 const formData = new FormData();
                 formData.append('message', message);
-                formData.append('ip_address', userIpAddress);  // Add the IP address
+                formData.append('ip_address', ipAddress);
 
                 // Append uploaded files to formData
                 uploadedFiles.forEach((file) => {
@@ -220,7 +236,7 @@
                 });
 
                 // Replace with your ngrok URL
-                fetch('https://b24b-35-204-47-124.ngrok-free.app/chat', {
+                fetch('https://8f9d-35-204-47-124.ngrok-free.app/chat', {
                     method: 'POST',
                     body: formData,
                 })
@@ -233,7 +249,7 @@
                     appendMessage('AI', 'We are conducting maintenance on our chat service, this feature is unavailable right now.');
                 });
 
-                // Reset the file list
+                // Reset the file list after sending
                 uploadedFiles = [];
                 displayFiles();
             }
